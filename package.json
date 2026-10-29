@@ -1,0 +1,15 @@
+{
+  "name": "lightbox-studio",
+  "version": "0.1.0",
+  "description": "A desktop animation studio for hand-drawn sprite moves: onion skin, exposure sheet, jump detection, a song track, and automation for drawing with ChatGPT and pulling songs from Suno.",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "check": "node --check src/main/main.js && node --check src/main/automation.js && node --check src/preload/preload.js && node --check src/renderer/studio.js && node --check src/renderer/app.js"
+  },
+  "keywords": ["animation", "sprites", "electron", "onion-skin", "dope-sheet", "game-dev"],
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "33.4.11"
+  }
+}

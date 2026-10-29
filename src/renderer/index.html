@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<title>Lightbox Studio</title>
+<link rel="stylesheet" href="studio.css">
+</head>
+<body>
+<div class="app">
+  <aside class="side" aria-label="Project">
+    <div class="brand">Lightbox Studio</div>
+    <button id="openProject" class="wide">Open project folder…</button>
+    <p class="proj" id="projName">No project open</p>
+
+    <h2 class="lab">Moves (kits)</h2>
+    <ul class="list" id="kitList"><li class="empty">Cut a sheet to make one.</li></ul>
+    <h2 class="lab">Sheets from ChatGPT</h2>
+    <ul class="list" id="sheetList"><li class="empty">None yet.</li></ul>
+    <h2 class="lab">Songs</h2>
+    <ul class="list" id="audioList"><li class="empty">Download from the Suno tab.</li></ul>
+    <p class="hint" id="dlNote"></p>
+  </aside>
+
+  <main class="main">
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button role="tab" data-tab="studio" aria-selected="true">Studio</button>
+      <button role="tab" data-tab="prompts">Prompts &amp; cutting</button>
+      <button role="tab" data-tab="chatgpt">ChatGPT</button>
+      <button role="tab" data-tab="suno">Suno</button>
+    </nav>
+
+    <!-- STUDIO -->
+    <section class="view" id="view-studio">
+      <div class="bar" role="toolbar" aria-label="Playback">
+        <span class="clipname" id="clipName">Sample: none loaded</span>
+        <div class="grp">
+          <button id="prevB" title="Previous frame (left arrow)">◀</button>
+          <button id="play" class="primary" title="Play or pause (space)">Play</button>
+          <button id="nextB" title="Next frame (right arrow)">▶</button>
+          <button id="loop" class="on">Loop</button>
+        </div>
+        <div class="grp"><label class="lab" for="fps">fps</label>
+          <select id="fps"><option>6</option><option>8</option><option selected>12</option><option>24</option><option>30</option></select></div>
+        <div class="grp"><span class="lab">Onion skin</span>
+          <button id="onPrev" class="on">Before</button><button id="onNext">After</button>
+          <input type="range" id="onOp" min="0" max="80" value="35" aria-label="Onion skin strength"></div>
+        <div class="grp"><button id="saveTiming" disabled>Save timing</button></div>
+      </div>
+      <div class="stage">
+        <div class="box big"><span class="tag">Lightbox</span><canvas id="cv"></canvas></div>
+        <div class="sidecol">
+          <div class="box small"><span class="tag">Game size</span><canvas id="sm"></canvas></div>
+          <div class="readout" aria-live="polite">
+            <span>frame</span><b id="rFrame">–</b><span>drawing</span><b id="rDraw">–</b>
+            <span>length</span><b id="rLen">–</b><span>drawings</span><b id="rCount">–</b>
+            <span>song at</span><b id="rSong">–</b>
+          </div>
+        </div>
+      </div>
+      <section class="sheet" aria-label="Exposure sheet">
+        <div class="sheethead"><span class="lab">Exposure sheet: frames each drawing holds</span>
+          <div class="grp"><span class="lab">Selected</span><button data-set="1">Ones</button><button data-set="2">Twos</button><button data-set="3">Threes</button><button id="selAll">Select all</button></div></div>
+        <div class="scroller"><div class="boil" id="boil" aria-hidden="true"></div><div class="cells" id="cells"></div></div>
+      </section>
+      <section class="sheet" aria-label="Song">
+        <div class="sheethead"><span class="lab" id="songName">Song: none</span>
+          <div class="grp"><label class="lab" for="aOff">Move starts at</label><input type="number" id="aOff" value="0" step="0.05" min="0"><span class="lab">s</span>
+            <label class="lab" for="bpm">bpm</label><input type="number" id="bpm" value="0" min="0" step="1" title="Set the song's tempo to see beat lines">
+            <button id="snapBeat" title="Move the start so the selected drawing lands on the nearest beat">Land selected on a beat</button>
+            <button id="aMute">Mute</button></div></div>
+        <canvas id="wave" height="64"></canvas>
+      </section>
+    </section>
+
+    <!-- PROMPTS -->
+    <section class="view" id="view-prompts" hidden>
+      <div class="cols">
+        <section class="panel">
+          <h2 class="lab">Send to ChatGPT</h2>
+          <label for="pName">Name for the result</label><input id="pName" placeholder="bruteski_rip_keys">
+          <label for="pText">Prompt</label><textarea id="pText" rows="12" placeholder="Describe the sheet you want drawn…"></textarea>
+          <div class="grp"><button id="pAddRefs">Add reference pictures…</button><span class="hint" id="pRefs">No references.</span></div>
+          <input type="file" id="pRefFiles" accept="image/*" multiple hidden>
+          <div class="grp"><button id="pQueue">Add to queue</button><button id="pRun" class="primary">Run queue</button><button id="pStop">Stop</button></div>
+          <ol class="queue" id="queue"></ol>
+          <p class="hint">The ChatGPT tab must be signed in. Each finished picture is saved, untouched, to the project's sheets folder with its prompt beside it.</p>
+        </section>
+        <section class="panel">
+          <h2 class="lab">Cut a sheet into a move</h2>
+          <label for="cSheet">Sheet</label><select id="cSheet"></select>
+          <div class="row3">
+            <div><label for="cRows">Rows</label><input type="number" id="cRows" value="2" min="1"></div>
+            <div><label for="cCols">Columns</label><input type="number" id="cCols" value="4" min="1"></div>
+            <div><label for="cHold">Hold</label><input type="number" id="cHold" value="2" min="1" title="Frames each drawing holds: 2 = on twos"></div>
+          </div>
+          <label for="cSkip">Leave out cells (e.g. copies of the keys on an in-between sheet)</label><input id="cSkip" placeholder="1,5">
+          <label for="cName">Move name</label><input id="cName" placeholder="bruteski_rip_keys">
+          <button id="cRun" class="primary">Cut</button>
+          <pre class="log" id="cLog"></pre>
+          <p class="hint">Drawings are only cut out, scaled as a whole and lined up on one ground line. Nothing inside a drawing is changed.</p>
+        </section>
+      </div>
+    </section>
+
+    <!-- WEB PANES -->
+    <section class="view panehost" id="view-pane" hidden>
+      <div class="panebar"><span id="paneTitle"></span><button id="paneReload">Reload</button></div>
+      <div class="panearea" id="paneArea"></div>
+    </section>
+  </main>
+</div>
+<script src="studio.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
